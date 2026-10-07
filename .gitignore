@@ -1,0 +1,19 @@
+
+# Python environment and caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+backend/.venv/
+
+# Environment variables and local databases
+.env
+backend/.env
+*.db
+backend/reviews.db
+
+# Frontend Node modules and build files
+node_modules/
+frontend/node_modules/
+dist/
+build/
