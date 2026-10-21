@@ -1,0 +1,20 @@
+$kind: http-request
+name: PM-06 POST /api/review over 2000 lines
+url: "{{baseUrl}}/api/review"
+method: POST
+headers:
+  X-Session-Id: "{{sessionId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: "{}"
+scripts:
+  - type: beforeRequest
+    code: "pm.request.body.update(JSON.stringify({ code: 'x = 1\\n'.repeat(2001), language: 'python' }));"
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 413', () => pm.response.to.have.status(413));
+      pm.test('Size message returned', () => pm.expect(pm.response.json().detail).to.include('max 2000 lines'));
+    language: text/javascript
+order: 6000

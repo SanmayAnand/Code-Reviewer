@@ -1,0 +1,21 @@
+$kind: http-request
+name: PM-04 POST /api/review unsupported language
+url: "{{baseUrl}}/api/review"
+method: POST
+headers:
+  X-Session-Id: "{{sessionId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "code": "x = 1",
+      "language": "cobol"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 422', () => pm.response.to.have.status(422));
+      pm.test('Language message returned', () => pm.expect(pm.response.json().detail).to.include('auto, python or java'));
+    language: text/javascript
+order: 4000

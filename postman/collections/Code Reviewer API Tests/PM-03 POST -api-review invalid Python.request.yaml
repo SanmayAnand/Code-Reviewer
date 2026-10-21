@@ -1,0 +1,20 @@
+$kind: http-request
+name: PM-03 POST /api/review invalid Python
+url: "{{baseUrl}}/api/review"
+method: POST
+headers:
+  X-Session-Id: "{{sessionId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "code": "def f(:"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 422', () => pm.response.to.have.status(422));
+      pm.test('Parse error message returned', () => pm.expect(pm.response.json().detail).to.include('syntax error'));
+    language: text/javascript
+order: 3000

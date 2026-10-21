@@ -1,0 +1,19 @@
+$kind: http-request
+name: PM-01 GET /api/config
+url: "{{baseUrl}}/api/config"
+method: GET
+headers:
+  X-Session-Id: "{{sessionId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 200', () => pm.response.to.have.status(200));
+      const j = pm.response.json();
+      pm.test('Config fields present', () => {
+        pm.expect(j).to.have.property('provider');
+        pm.expect(j).to.have.property('llm_enabled');
+        pm.expect(j.max_lines).to.eql(2000);
+        pm.expect(j.daily_limit).to.eql(20);
+      });
+    language: text/javascript
+order: 1000

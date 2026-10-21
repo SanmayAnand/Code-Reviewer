@@ -1,0 +1,13 @@
+$kind: http-request
+name: PM-11 DELETE /api/history/{id}
+url: "{{baseUrl}}/api/history/{{historyId}}"
+method: DELETE
+headers:
+  X-Session-Id: "{{sessionId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 200', () => pm.response.to.have.status(200));
+      pm.test('Deleted id returned', () => pm.expect(pm.response.json().deleted).to.eql(pm.collectionVariables.get('historyId')));
+    language: text/javascript
+order: 11000

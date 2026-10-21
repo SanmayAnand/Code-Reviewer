@@ -1,0 +1,11 @@
+$kind: http-request
+name: PM-12 GET /api/history/{id} after delete
+url: "{{baseUrl}}/api/history/{{historyId}}"
+method: GET
+headers:
+  X-Session-Id: "{{sessionId}}"
+scripts:
+  - type: afterResponse
+    code: pm.test('Status is 404', () => pm.response.to.have.status(404));
+    language: text/javascript
+order: 12000

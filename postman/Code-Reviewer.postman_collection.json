@@ -1,0 +1,490 @@
+{
+  "info": {
+    "name": "Code Reviewer API Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000"
+    },
+    {
+      "key": "sessionId",
+      "value": "postman-session-0001"
+    },
+    {
+      "key": "historyId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "PM-01 GET /api/config",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/config",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "config"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('Config fields present', () => {",
+              "  pm.expect(j).to.have.property('provider');",
+              "  pm.expect(j).to.have.property('llm_enabled');",
+              "  pm.expect(j.max_lines).to.eql(2000);",
+              "  pm.expect(j.daily_limit).to.eql(20);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-02 POST /api/review valid Python",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "review"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"def add(a, b): return a + b\",\n  \"language\": \"auto\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "const j = pm.response.json();",
+              "pm.test('Report has summary and smells', () => {",
+              "  pm.expect(j.report).to.have.property('summary');",
+              "  pm.expect(j.report.smells).to.be.an('array');",
+              "  pm.expect(j.report.language).to.eql('python');",
+              "});",
+              "pm.collectionVariables.set('historyId', j.id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-03 POST /api/review invalid Python",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "review"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"def f(:\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+              "pm.test('Parse error message returned', () => pm.expect(pm.response.json().detail).to.include('syntax error'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-04 POST /api/review unsupported language",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "review"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"x = 1\",\n  \"language\": \"cobol\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+              "pm.test('Language message returned', () => pm.expect(pm.response.json().detail).to.include('auto, python or java'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-05 POST /api/review empty code",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "review"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"code\": \"\",\n  \"language\": \"auto\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 422', () => pm.response.to.have.status(422));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-06 POST /api/review over 2000 lines",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/review",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "review"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        }
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.request.body.update(JSON.stringify({ code: 'x = 1\\n'.repeat(2001), language: 'python' }));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 413', () => pm.response.to.have.status(413));",
+              "pm.test('Size message returned', () => pm.expect(pm.response.json().detail).to.include('max 2000 lines'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-07 GET /api/config without session header",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/config",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "config"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 400', () => pm.response.to.have.status(400));",
+              "pm.test('Header message returned', () => pm.expect(pm.response.json().detail).to.include('X-Session-Id'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-08 GET /api/history",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/history",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "history"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('List contains the new review', () => {",
+              "  const ids = pm.response.json().items.map(i => i.id);",
+              "  pm.expect(ids).to.include(pm.collectionVariables.get('historyId'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-09 GET /api/history/{id}",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/history/{{historyId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "history",
+            "{{historyId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Stored report returned', () => pm.expect(pm.response.json().report).to.have.property('smells'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-10 GET /api/history/{id} from another session",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "other-session-0002"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/history/{{historyId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "history",
+            "{{historyId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-11 DELETE /api/history/{id}",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/history/{{historyId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "history",
+            "{{historyId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Deleted id returned', () => pm.expect(pm.response.json().deleted).to.eql(pm.collectionVariables.get('historyId')));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PM-12 GET /api/history/{id} after delete",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Session-Id",
+            "value": "{{sessionId}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/history/{{historyId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "history",
+            "{{historyId}}"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 404', () => pm.response.to.have.status(404));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

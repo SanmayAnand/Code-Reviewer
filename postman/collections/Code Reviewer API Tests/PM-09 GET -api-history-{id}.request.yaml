@@ -1,0 +1,13 @@
+$kind: http-request
+name: PM-09 GET /api/history/{id}
+url: "{{baseUrl}}/api/history/{{historyId}}"
+method: GET
+headers:
+  X-Session-Id: "{{sessionId}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 200', () => pm.response.to.have.status(200));
+      pm.test('Stored report returned', () => pm.expect(pm.response.json().report).to.have.property('smells'));
+    language: text/javascript
+order: 9000

@@ -1,0 +1,27 @@
+$kind: http-request
+name: PM-02 POST /api/review valid Python
+url: "{{baseUrl}}/api/review"
+method: POST
+headers:
+  X-Session-Id: "{{sessionId}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "code": "def add(a, b): return a + b",
+      "language": "auto"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status is 200', () => pm.response.to.have.status(200));
+      const j = pm.response.json();
+      pm.test('Report has summary and smells', () => {
+        pm.expect(j.report).to.have.property('summary');
+        pm.expect(j.report.smells).to.be.an('array');
+        pm.expect(j.report.language).to.eql('python');
+      });
+      pm.collectionVariables.set('historyId', j.id);
+    language: text/javascript
+order: 2000
